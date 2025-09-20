@@ -1,13 +1,14 @@
 spring:
   application:
     name: config-server
-  profiles:
-    active: native
   cloud:
     config:
       server:
-        native:
-          search-locations: classpath:/config-repo
+        git:
+          uri: file:///${user.dir}/config-repo
+          default-label: main
+          clone-on-start: false
+          search-paths: '**'
 
 server:
   port: 8888
