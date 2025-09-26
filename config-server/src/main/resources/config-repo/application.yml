@@ -1,20 +1,18 @@
-spring:
-  profiles:
-    active: default
-  cloud:
-    config:
-      server:
-        git:
-          uri: file://${user.dir}/config-repo
-          default-label: main
-          clone-on-start: true
-
-server:
-  port: 8888
-
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
-    fetch-registry: false
-    register-with-eureka: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.springframework.cloud: INFO
+    org.example: DEBUG
