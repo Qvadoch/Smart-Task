@@ -15,15 +15,15 @@ public class TaskRequest {
     @Size(max = 1000, message = "Description cannot exceed 1000 characters")
     private String description;
 
-    private TaskStatus status = TaskStatus.TODO; // Значение по умолчанию
+    private TaskStatus status = TaskStatus.TODO;
 
-    private Priority priority = Priority.MEDIUM; // Значение по умолчанию
+    private Priority priority = Priority.MEDIUM;
 
     @Future(message = "Deadline must be in the future")
     private LocalDateTime deadline;
 
     @NotNull(message = "User ID is required")
-    @Positive(message = "User ID must be a positive number") // Новая аннотация
+    @Positive(message = "User ID must be a positive number")
     private Long userId;
 
     // Геттеры и сеттеры

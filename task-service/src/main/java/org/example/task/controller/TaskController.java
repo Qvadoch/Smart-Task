@@ -1,5 +1,6 @@
 package org.example.task.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.example.task.dto.ApiResponse;
 import org.example.task.dto.TaskRequest;
 import org.example.task.dto.TaskResponse;
@@ -15,6 +16,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/tasks")
+@Slf4j
 public class TaskController {
 
     @Autowired
@@ -22,7 +24,7 @@ public class TaskController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<TaskResponse>>> getAllTasksByUser(
-            @RequestHeader("X-User-Id") Long userId) {
+            @RequestParam Long userId) {
         List<TaskResponse> tasks = taskService.getAllTasksByUser(userId);
         return ResponseEntity.ok(ApiResponse.success("Tasks retrieved successfully", tasks));
     }
@@ -30,7 +32,7 @@ public class TaskController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<TaskResponse>> getTaskById(
             @PathVariable Long id,
-            @RequestHeader("X-User-Id") Long userId) {
+            @RequestParam Long userId) {
         return taskService.getTaskById(id, userId)
                 .map(task -> ResponseEntity.ok(ApiResponse.success("Task retrieved successfully", task)))
                 .orElse(ResponseEntity.notFound().build());
@@ -38,14 +40,7 @@ public class TaskController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<TaskResponse>> createTask(
-            @Valid @RequestBody TaskRequest taskRequest,
-            @RequestHeader("X-User-Id") Long userId) {
-
-        // Убедимся, что userId в заголовке совпадает с userId в запросе
-        if (!userId.equals(taskRequest.getUserId())) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("User ID in header doesn't match request body"));
-        }
+            @Valid @RequestBody TaskRequest taskRequest) {
 
         TaskResponse createdTask = taskService.createTask(taskRequest);
         return ResponseEntity.ok(ApiResponse.success("Task created successfully", createdTask));
@@ -54,10 +49,9 @@ public class TaskController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<TaskResponse>> updateTask(
             @PathVariable Long id,
-            @Valid @RequestBody TaskRequest taskRequest,
-            @RequestHeader("X-User-Id") Long userId) {
+            @Valid @RequestBody TaskRequest taskRequest) {
 
-        return taskService.updateTask(id, taskRequest, userId)
+        return taskService.updateTask(id, taskRequest)
                 .map(task -> ResponseEntity.ok(ApiResponse.success("Task updated successfully", task)))
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -65,10 +59,10 @@ public class TaskController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<ApiResponse<TaskResponse>> updateTaskStatus(
             @PathVariable Long id,
-            @RequestParam TaskStatus status,
-            @RequestHeader("X-User-Id") Long userId) {
+            @RequestParam Long userId,
+            @RequestParam TaskStatus status) {
 
-        return taskService.updateTaskStatus(id, status, userId)
+        return taskService.updateTaskStatus(id, userId, status)
                 .map(task -> ResponseEntity.ok(ApiResponse.success("Task status updated successfully", task)))
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -76,7 +70,7 @@ public class TaskController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteTask(
             @PathVariable Long id,
-            @RequestHeader("X-User-Id") Long userId) {
+            @RequestParam Long userId) {
 
         if (taskService.deleteTask(id, userId)) {
             return ResponseEntity.ok(ApiResponse.success("Task deleted successfully"));
@@ -86,8 +80,8 @@ public class TaskController {
 
     @GetMapping("/filter/status")
     public ResponseEntity<ApiResponse<List<TaskResponse>>> getTasksByStatus(
-            @RequestParam TaskStatus status,
-            @RequestHeader("X-User-Id") Long userId) {
+            @RequestParam Long userId,
+            @RequestParam TaskStatus status) {
 
         List<TaskResponse> tasks = taskService.getTasksByStatus(userId, status);
         return ResponseEntity.ok(ApiResponse.success("Tasks filtered by status", tasks));
@@ -95,8 +89,8 @@ public class TaskController {
 
     @GetMapping("/filter/priority")
     public ResponseEntity<ApiResponse<List<TaskResponse>>> getTasksByPriority(
-            @RequestParam Priority priority,
-            @RequestHeader("X-User-Id") Long userId) {
+            @RequestParam Long userId,
+            @RequestParam Priority priority) {
 
         List<TaskResponse> tasks = taskService.getTasksByPriority(userId, priority);
         return ResponseEntity.ok(ApiResponse.success("Tasks filtered by priority", tasks));
@@ -104,7 +98,7 @@ public class TaskController {
 
     @GetMapping("/overdue")
     public ResponseEntity<ApiResponse<List<TaskResponse>>> getOverdueTasks(
-            @RequestHeader("X-User-Id") Long userId) {
+            @RequestParam Long userId) {
 
         List<TaskResponse> tasks = taskService.getOverdueTasks(userId);
         return ResponseEntity.ok(ApiResponse.success("Overdue tasks retrieved", tasks));
@@ -112,9 +106,9 @@ public class TaskController {
 
     @GetMapping("/filter")
     public ResponseEntity<ApiResponse<List<TaskResponse>>> getTasksWithFilters(
+            @RequestParam Long userId,
             @RequestParam(required = false) TaskStatus status,
-            @RequestParam(required = false) Priority priority,
-            @RequestHeader("X-User-Id") Long userId) {
+            @RequestParam(required = false) Priority priority) {
 
         List<TaskResponse> tasks = taskService.getTasksWithFilters(userId, status, priority);
         return ResponseEntity.ok(ApiResponse.success("Tasks filtered successfully", tasks));
@@ -122,10 +116,18 @@ public class TaskController {
 
     @GetMapping("/stats/count")
     public ResponseEntity<ApiResponse<Long>> getTaskCountByStatus(
-            @RequestParam TaskStatus status,
-            @RequestHeader("X-User-Id") Long userId) {
+            @RequestParam Long userId,
+            @RequestParam TaskStatus status) {
 
         long count = taskService.getTaskCountByStatus(userId, status);
         return ResponseEntity.ok(ApiResponse.success("Task count retrieved", count));
+    }
+    @GetMapping("/{id}/belongs-to-user")
+    public ResponseEntity<ApiResponse<Boolean>> taskBelongsToUser(
+            @PathVariable Long id,
+            @RequestParam Long userId) {
+
+        boolean belongs = taskService.taskBelongsToUser(id, userId);
+        return ResponseEntity.ok(ApiResponse.success("Task ownership checked", belongs));
     }
 }
